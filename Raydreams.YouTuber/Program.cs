@@ -61,7 +61,7 @@ namespace Raydreams.YouTube
         public int SequenceStart { get; set; } = 1;
 
         /// <summary>List of Video IDs</summary>
-        protected List<String> Videos { get; set; }
+        protected List<Uri> Videos { get; set; }
 
         #endregion [ Properties ]
 
@@ -83,11 +83,11 @@ namespace Raydreams.YouTube
                 int count = 0;
 
                 // dl each video
-                foreach ( string url in Videos )
+                foreach ( Uri url in Videos )
                 {
                     try
                     {
-                        this.DownloadVideo( url, $"{BaseFilename}-{this.SequenceStart + count}" );
+                        var info = this.DownloadVideo( url, $"{BaseFilename}-{this.SequenceStart + count}" );
                     }
                     catch
                     {
@@ -112,7 +112,7 @@ namespace Raydreams.YouTube
                 return;
 
             // init the list to load
-            this.Videos = new List<string>();
+            this.Videos = new List<Uri>();
 
             // read everything
             var lines = File.ReadAllLines( path ).ToList();
@@ -124,38 +124,45 @@ namespace Raydreams.YouTube
                 if ( String.IsNullOrWhiteSpace( line ) )
                     continue;
 
-                this.Videos.Add( line.Trim() );
+                // extract the video ID from the URL
+                var url = new Uri( line.Trim() );
+
+                if ( !url.IsAbsoluteUri )
+                    continue;
+
+                var queryDict = url.Query.PairsToDictionary( false );
+
+                if ( !queryDict.ContainsKey( "v" ) )
+                    continue;
+
+                string id = queryDict["v"];
+                this.Videos.Add( new Uri( $"https://www.youtube.com/watch?v={id}" ) );
             }
         }
 
         /// <summary>Actually DL the video sync for now</summary>
         /// <param name="vid">YourYube Video ID ONLY</param>
         /// <param name="filename">Name of the output file</param>
-        public void DownloadVideo(string vid, string filename)
+        public YouTubeVideoInfo DownloadVideo(Uri vid, string filename)
         {
-            var url = new Uri( $"https://www.youtube.com/watch?v={vid}" );
-
-            if ( String.IsNullOrWhiteSpace(filename) || !url.IsAbsoluteUri )
-                return;
+            if ( String.IsNullOrWhiteSpace(filename) || !vid.IsAbsoluteUri )
+                return null;
 
             // Initialize an instance of the MultimediaScraper class
-            using var multimediaScraper = new MultimediaScraper();
+            using MultimediaScraper multimediaScraper = new MultimediaScraper();
 
             // Create a multimedia object that includes information from the URL
-            using var multimedia = multimediaScraper.GetMultimedia( url.AbsoluteUri );
+            using Multimedia multimedia = multimediaScraper.GetMultimedia( vid.AbsoluteUri );
 
             // Get a VideoInfo object
-            var videoInfo = multimedia.CollectVideoInfo();
-
-            // Cast a videoInfo to YouTubeVideoInfo type
-            var youTubeVideoInfo = videoInfo as YouTubeVideoInfo;
+            YouTubeVideoInfo info = multimedia.CollectVideoInfo() as YouTubeVideoInfo;
 
             // log nothing
-            if ( youTubeVideoInfo == null )
-                return;
+            if ( info == null )
+                return null;
             
             // Get the first element from the formats collection with minimal bitrate and present audio and video codecs
-            var format = youTubeVideoInfo.Formats.OrderBy( f => f.Bitrate ).First( f => f.AudioCodec != null && f.VideoCodec != null );
+            var format = info.Formats.OrderBy( f => f.Bitrate ).First( f => f.AudioCodec != null && f.VideoCodec != null );
 
             // Get the extension for the output file
             var ext = String.IsNullOrEmpty( format.Extension ) ? "mp4" : format.Extension;
@@ -163,13 +170,15 @@ namespace Raydreams.YouTube
             // Get the full file path for the output file
             var filePath = Path.Combine( DesktopPath, AppFolder, DownloadFolder, $"{filename}.{ext}" );
 
+            // create a log statement for later
+            string log = $"Title:{info.Title}; Description:{info.Description}; Duration:{info.Duration}; Thumbnails Count:{info.Thumbnails.Count}; Formats count: {0}, { info.Formats.Count} ";
+
+            Console.WriteLine( log );
+
             // Download YouTube video
             multimedia.Download( format, filePath );
 
-            // create a log statement for later
-            string log = $"Title:{youTubeVideoInfo.Title}; Description:{youTubeVideoInfo.Description}; Duration:{youTubeVideoInfo.Duration}; Thumbnails Count:{youTubeVideoInfo.Thumbnails.Count}; Formats count: {0}, { youTubeVideoInfo.Formats.Count} ";
-
-            // later return the info
+            return info;
         }
 
         #endregion [ Methods ]
