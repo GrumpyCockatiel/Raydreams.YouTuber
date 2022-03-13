@@ -8,7 +8,7 @@ This is written on my Mac but should work fine on Windows as well. I will add a 
 public static readonly string DesktopPath = Environment.GetFolderPath( Environment.SpecialFolder.DesktopDirectory );
 ```
 
-Everything defaults to the desktop for now as
+Everything defaults to the desktop for now in the folders:
 
 ```
 /YouTuber/<input_list>.txt
@@ -19,12 +19,14 @@ Put you list of YouTube video URLs in the input list file as single column - one
 
 There are couple Command Line options
 ```
--b myshow -i myvideos.txt -s 1
+-b myoutfilename -i myvideos.txt -s 1
 ```
 
-* b - base outfile name like the format myvideo-N.mp4
+* b - base outfile name like the format myvideo-#.mp4
 * i - input file to read from
 * s - sequence ID to start from which defaults to 1 but if you need to pick up where you left off
+
+Sadly, the Aspose downloader is synchronous with no callback parameters meaning there's no way to get progress on the download as it is happening? It would appear the downloader loads the entire video into memory and then writes it to disk as opposed to streaming it directly to a filestream?
 
 # License
 

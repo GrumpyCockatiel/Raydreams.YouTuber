@@ -10,6 +10,11 @@ using Raydreams.YouTuber;
 namespace Raydreams.YouTube
 {
     /// <summary>Simple CL console app to download a collection of YouTube videos specified in the input file</summary>
+    /// <remarks>
+    /// TO DO
+    /// add a logger
+    /// check file paths exists
+    /// </remarks>
     public class YouTuber
     {
         #region [ Fields ]
@@ -89,8 +94,9 @@ namespace Raydreams.YouTube
                     {
                         var info = this.DownloadVideo( url, $"{BaseFilename}-{this.SequenceStart + count}" );
                     }
-                    catch
+                    catch (System.Exception e)
                     {
+                        Console.WriteLine( e.Message );
                         continue;
                     }
 
@@ -171,7 +177,7 @@ namespace Raydreams.YouTube
             var filePath = Path.Combine( DesktopPath, AppFolder, DownloadFolder, $"{filename}.{ext}" );
 
             // create a log statement for later
-            string log = $"Title:{info.Title}; Description:{info.Description}; Duration:{info.Duration}; Thumbnails Count:{info.Thumbnails.Count}; Formats count: {0}, { info.Formats.Count} ";
+            string log = $"Title:{info.Title}; Description:{info.Description}; Duration:{info.Duration}; Thumbnails Count:{info.Thumbnails.Count}; Formats count: {0}, { info.Formats.Count} ".Replace('\n', ' ');
 
             Console.WriteLine( log );
 
