@@ -48,7 +48,10 @@ namespace Raydreams.YouTube
         {
             if (options != null)
             {
+                // required
                 this.InputList = options.InputFile;
+
+                // default optional values set in CommandLineOptions
                 this.BaseFilename = options.BaseFilename;
                 this.SequenceStart = options.SequenceStart;
             }
@@ -57,7 +60,7 @@ namespace Raydreams.YouTube
         #region [ Properties ]
 
         /// <summary>Input data file with one video URL per line</summary>
-        public string InputList { get; set; } = "myvideos.txt";
+        public string InputList { get; set; }
 
         /// <summary>The base file name for each video</summary>
         public string BaseFilename { get; set; } = "video";
