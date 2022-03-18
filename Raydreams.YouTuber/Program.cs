@@ -82,7 +82,7 @@ namespace Raydreams.YouTube
             {
                 // need to check all the folders exist
 
-                // load the input data
+                // load the input data into the Videos list
                 this.LoadData( Path.Combine( DesktopPath, AppFolder, InputList ) );
 
                 if ( this.Videos.Count < 1 )
