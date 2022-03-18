@@ -13,7 +13,6 @@ namespace Raydreams.YouTube
     /// <remarks>
     /// TO DO
     /// add a logger
-    /// check file paths exists
     /// </remarks>
     public class YouTuber
     {
@@ -52,8 +51,8 @@ namespace Raydreams.YouTube
                 this.InputList = options.InputFile;
 
                 // default optional values set in CommandLineOptions
-                this.BaseFilename = options.BaseFilename;
-                this.SequenceStart = options.SequenceStart;
+                this.BaseFilename = ( !String.IsNullOrWhiteSpace( options.BaseFilename ) ) ? options.BaseFilename : "video";
+                this.SequenceStart = ( options.SequenceStart > -1 ) ? options.SequenceStart : 1;
             }
         }
 
@@ -80,10 +79,8 @@ namespace Raydreams.YouTube
         {
             try
             {
-                // need to check all the folders exist
-
                 // load the input data into the Videos list
-                this.LoadData( Path.Combine( DesktopPath, AppFolder, InputList ) );
+                this.LoadData( this.InputList );
 
                 if ( this.Videos.Count < 1 )
                     return;
@@ -115,38 +112,39 @@ namespace Raydreams.YouTube
 
         /// <summary>Load all the video IDs to download</summary>
         /// <param name="path"></param>
-        public void LoadData(string path)
+        public void LoadData( string path )
         {
-            if ( !File.Exists( path ) )
+            if ( String.IsNullOrWhiteSpace(path) )
                 return;
 
             // init the list to load
             this.Videos = new List<Uri>();
 
-            // read everything
-            var lines = File.ReadAllLines( path ).ToList();
-
-            // parse all the input
-            // later extract just the ID from a complete URL
-            foreach (string line in lines)
+            // is it a local file
+            if ( File.Exists( path ) )
             {
-                if ( String.IsNullOrWhiteSpace( line ) )
-                    continue;
+                // read everything
+                var lines = File.ReadAllLines( path ).ToList();
 
-                // extract the video ID from the URL
-                var url = new Uri( line.Trim() );
+                // parse all the input
+                foreach ( string line in lines )
+                {
+                    var uri = ExtractSimpleUrl( line );
 
-                if ( !url.IsAbsoluteUri )
-                    continue;
+                    if (uri != null)
+                        this.Videos.Add( uri );
+                }
 
-                var queryDict = url.Query.PairsToDictionary( false );
-
-                if ( !queryDict.ContainsKey( "v" ) )
-                    continue;
-
-                string id = queryDict["v"];
-                this.Videos.Add( new Uri( $"https://www.youtube.com/watch?v={id}" ) );
+                return;
             }
+
+            // maybe a url itself
+            var vid = ExtractSimpleUrl( path );
+
+            if ( vid != null )
+                this.Videos.Add( vid );
+
+            return;
         }
 
         /// <summary>Actually DL the video sync for now</summary>
@@ -188,6 +186,30 @@ namespace Raydreams.YouTube
             multimedia.Download( format, filePath );
 
             return info;
+        }
+
+        /// <summary>Reduce a YouTube URL to its simple form</summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        private Uri ExtractSimpleUrl(string path)
+        {
+            if ( String.IsNullOrWhiteSpace( path ) )
+                return null;
+
+            // extract the video ID from the URL
+            var url = new Uri( path.Trim() );
+
+            if ( !url.IsAbsoluteUri )
+                return null;
+
+            var queryDict = url.Query.PairsToDictionary( false );
+
+            if ( !queryDict.ContainsKey( "v" ) )
+                return null;
+
+            string id = queryDict["v"];
+
+            return new Uri( $"https://www.youtube.com/watch?v={id}" );
         }
 
         #endregion [ Methods ]

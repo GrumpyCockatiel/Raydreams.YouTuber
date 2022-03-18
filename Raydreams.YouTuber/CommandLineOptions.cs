@@ -8,7 +8,7 @@ namespace Raydreams.YouTuber
     {
 
         /// <summary></summary>
-        [Option( 'i', "input", Required = true, HelpText = "Filename of the input file with a single column list of YouTube IDs" )]
+        [Option( 'i', "input", Required = true, HelpText = "Either the complete filepath to an input file with a single column list of YouTube video URLs or single URL itself." )]
         public string InputFile { get; set; }
 
         /// <summary></summary>
