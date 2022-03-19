@@ -21,9 +21,6 @@ namespace Raydreams.YouTube
         /// <summary>Root path to the users desktop folder at least on the Mac</summary>
         public static readonly string DesktopPath = Environment.GetFolderPath( Environment.SpecialFolder.DesktopDirectory );
 
-        /// <summary>Where videYos are downloaded to</summary>
-        public const string DownloadFolder = "Downloads";
-
         /// <summary>Folder on the desktop were all the app data is stored</summary>
         public const string AppFolder = "YouTuber";
 
@@ -53,6 +50,15 @@ namespace Raydreams.YouTube
                 // default optional values set in CommandLineOptions
                 this.BaseFilename = ( !String.IsNullOrWhiteSpace( options.BaseFilename ) ) ? options.BaseFilename : "video";
                 this.SequenceStart = ( options.SequenceStart > -1 ) ? options.SequenceStart : 1;
+
+                // determine the output folder
+                if ( !String.IsNullOrWhiteSpace(options.Output) )
+                {
+                    if ( !Directory.Exists( options.Output.Trim() ) )
+                        this.OutputFolder = new DirectoryInfo( Path.Combine( DesktopPath, AppFolder ) );
+                    else
+                        this.OutputFolder = new DirectoryInfo( options.Output.Trim() );
+                }
             }
         }
 
@@ -60,6 +66,9 @@ namespace Raydreams.YouTube
 
         /// <summary>Input data file with one video URL per line</summary>
         public string InputList { get; set; }
+
+        /// <summary>Download folder</summary>
+        public DirectoryInfo OutputFolder { get; protected set; } = new DirectoryInfo( Path.Combine( DesktopPath, AppFolder ) );
 
         /// <summary>The base file name for each video</summary>
         public string BaseFilename { get; set; } = "video";
@@ -175,7 +184,7 @@ namespace Raydreams.YouTube
             var ext = String.IsNullOrEmpty( format.Extension ) ? "mp4" : format.Extension;
 
             // Get the full file path for the output file
-            var filePath = Path.Combine( DesktopPath, AppFolder, DownloadFolder, $"{filename}.{ext}" );
+            string filePath = Path.Combine( this.OutputFolder.FullName, $"{filename}.{ext}" );
 
             // create a log statement for later
             string log = $"Title:{info.Title}; Description:{info.Description}; Duration:{info.Duration}; Thumbnails Count:{info.Thumbnails.Count}; Formats count: {0}, { info.Formats.Count} ".Replace('\n', ' ');
