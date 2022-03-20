@@ -211,7 +211,7 @@ namespace Raydreams.YouTube
             if ( !url.IsAbsoluteUri )
                 return null;
 
-            var queryDict = url.Query.PairsToDictionary( false );
+            var queryDict = url.Query.PairsToDictionary();
 
             if ( !queryDict.ContainsKey( "v" ) )
                 return null;
